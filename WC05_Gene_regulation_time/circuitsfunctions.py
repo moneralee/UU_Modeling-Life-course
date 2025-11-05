@@ -8,10 +8,25 @@ import umap
 import os
 os.makedirs("output", exist_ok=True)
 
-def ODErun(ODEtested,nodeA,nodeB):
+def ODEgeneRegulation(a,t,parameters): 
+    prod=parameters['prod']
+    decay=parameters['decay']
+    Ksat=parameters['Ksat']
+    variableA=parameters['variableA']
+    variableB=parameters['variableB']
+    n=parameters['n']
+    outputC=a[0]
+    doutputC=prod*variableA**n/(Ksat**n+variableA**n)*variableB**n/(Ksat**n+variableB**n)-decay*outputC  #AND gate # modify this line for other logic gates
+    return(doutputC)
+
+def logicalRule(variableA,variableB):
+    return(variableA and variableB)
+
+
+def ODErun(ODEtested,variableA,variableB):
     times = np.arange(0, 5000.1, 0.1)
     IC=0
-    parameters = {'prod': 0.01, 'decay': 0.001,'Ksat': 5, 'n': 2,'nodeA':nodeA,'nodeB':nodeB} # here you control the value of the inputs: nodeA and nodeB
+    parameters = {'prod': 0.01, 'decay': 0.001,'Ksat': 5, 'n': 2,'variableA':variableA,'variableB':variableB} # here you control the value of the inputs: variableA and variableB
     cells = odeint(ODEtested, IC, times, args=(parameters,)) #np.shape
     plt.figure(figsize=(8, 4))
     plt.plot(times, cells, label='outputC concentration')
@@ -29,16 +44,16 @@ def ODEBooleanPlot(ode_output, bool_output):
 
     # ODE output
     sns.heatmap(np.flipud(ode_output), ax=axes[0], xticklabels=20, yticklabels=20, cmap="viridis")
-    axes[0].set_xlabel('nodeB')
-    axes[0].set_ylabel('nodeA')
+    axes[0].set_xlabel('variableB')
+    axes[0].set_ylabel('variableA')
     axes[0].set_title('outputC steady-state concentration')
     axes[0].set_yticks(np.linspace(0, 10, 6))
     axes[0].set_yticklabels([str(int(x)) for x in np.linspace(10, 0, 6)])
 
     # Boolean output
     sns.heatmap(np.flipud(bool_output), ax=axes[1], xticklabels=[0, 1], yticklabels=[1, 0], cmap="viridis")
-    axes[1].set_xlabel('nodeB (Boolean)')
-    axes[1].set_ylabel('nodeA (Boolean)')
+    axes[1].set_xlabel('variableB (Boolean)')
+    axes[1].set_ylabel('variableA (Boolean)')
     axes[1].set_title('Boolean gate output')
     axes[1].set_yticks(np.linspace(0, 1, 6))
     axes[1].set_yticklabels([str(int(x)) for x in np.linspace(1, 0, 6)])
@@ -52,8 +67,8 @@ def ODEBooleanPlot(ode_output, bool_output):
     ax3d = fig.add_subplot(111, projection='3d')
     X, Y = np.meshgrid(np.arange(11), np.arange(11))
     ax3d.plot_surface(X, Y, ode_output, cmap='viridis', edgecolor='none')
-    ax3d.set_xlabel('nodeB')
-    ax3d.set_ylabel('nodeA')
+    ax3d.set_xlabel('variableB')
+    ax3d.set_ylabel('variableA')
     ax3d.set_zlabel('outputC')
     ax3d.set_title('3D surface: outputC steady-state')
     plt.tight_layout()
@@ -211,14 +226,14 @@ def rootNetworkAsynchronous(parameters):
 
 def plotBooleanTimecourse(matrix,timesteps):
     plt.figure(figsize=(16, 8))
-    node_names = ['CK', 'ARR1', 'SHY2', 'AUXIAAR', 'ARFR', 'ARF10', 'ARF5', 'XAL1', 
+    variable_names = ['CK', 'ARR1', 'SHY2', 'AUXIAAR', 'ARFR', 'ARF10', 'ARF5', 'XAL1', 
                   'PLT', 'AUX', 'SCR', 'SHR', 'MIR165', 'PHB', 'JKD', 'MGP', 'WOX5', 'CLE40']
-    sns.heatmap(matrix, cmap="viridis", cbar=True, xticklabels=node_names, cbar_kws={"ticks": [0, 1]})
-    #sns.heatmap(matrix, cmap=sns.color_palette(["red", "green"], as_cmap=True), cbar=True, xticklabels=node_names, cbar_kws={"ticks": [0, 1]})
+    sns.heatmap(matrix, cmap="viridis", cbar=True, xticklabels=variable_names, cbar_kws={"ticks": [0, 1]})
+    #sns.heatmap(matrix, cmap=sns.color_palette(["red", "green"], as_cmap=True), cbar=True, xticklabels=variable_names, cbar_kws={"ticks": [0, 1]})
     plt.grid(visible=True, which='both', axis='both', color='white', linewidth=0.5)
-    plt.xticks(np.arange(len(node_names)), node_names, rotation=90)
+    plt.xticks(np.arange(len(variable_names)), variable_names, rotation=90)
     plt.yticks(np.arange(timesteps+1), np.arange(timesteps+1))
-    plt.xlabel("Nodes")
+    plt.xlabel("variables")
     plt.ylabel("Timesteps")
     plt.title("Boolean Network Timecourse")
     plt.savefig("output/1-boolean-IC-timecourse.png", dpi=300, bbox_inches='tight')
@@ -227,16 +242,16 @@ def plotBooleanTimecourse(matrix,timesteps):
 def plotBooleanAttractors(attractors):
     # here we plot the attractors found
     plt.figure(figsize=(16, 8))
-    node_names = ['CK', 'ARR1', 'SHY2', 'AUXIAAR', 'ARFR', 'ARF10', 'ARF5', 'XAL1', 
+    variable_names = ['CK', 'ARR1', 'SHY2', 'AUXIAAR', 'ARFR', 'ARF10', 'ARF5', 'XAL1', 
                   'PLT', 'AUX', 'SCR', 'SHR', 'MIR165', 'PHB', 'JKD', 'MGP', 'WOX5', 'CLE40']
-    sns.heatmap(attractors, cmap="viridis", cbar=True, xticklabels=node_names, cbar_kws={"ticks": [0, 1]})
-    #sns.heatmap(attractors, cmap=sns.color_palette(["red", "green"], as_cmap=True), cbar=True, xticklabels=node_names,cbar_kws={"ticks": [0, 1]})
+    sns.heatmap(attractors, cmap="viridis", cbar=True, xticklabels=variable_names, cbar_kws={"ticks": [0, 1]})
+    #sns.heatmap(attractors, cmap=sns.color_palette(["red", "green"], as_cmap=True), cbar=True, xticklabels=variable_names,cbar_kws={"ticks": [0, 1]})
     plt.grid(visible=True, which='both', axis='both', color='white', linewidth=0.5)
-    plt.xticks(np.arange(len(node_names)), node_names, rotation=90)
+    plt.xticks(np.arange(len(variable_names)), variable_names, rotation=90)
     ICs = attractors.shape[0]
     plt.yticks(np.arange(ICs), )
-    plt.xlabel("Nodes")
-    plt.ylabel("Initial Conditions")
+    plt.xlabel("variables")
+    plt.ylabel("Attractors")
     plt.title("Recovered Attractors")
     plt.savefig("output/1-boolean-many-ICs.png", dpi=300, bbox_inches='tight')
     plt.show()
@@ -247,7 +262,7 @@ def UMAPBoolean(attractors):
     attractors_umap = reducer.fit_transform(attractors)
 
     plt.figure(figsize=(11, 8))
-    # Color cells by their attractor state (e.g., by the sum of active nodes)
+    # Color cells by their attractor state (e.g., by the sum of active variables)
     colors = np.sum(attractors, axis=1)
     # If the second to last position in attractor is 1, color that point purple
     special_mask = attractors[:, -2] == 1
@@ -325,8 +340,8 @@ def rootNetworkODE(a,t,parameters):
     w_MGP = min(1-ARF5,SCR,SHR)
     w_WOX5 = min(1-ARF10,ARF5,1-CLE40)
     w_CLE40 = 1-SHR
-    def sigmoid(w_node,h):
-        a=((-np.exp(0.5*h)+np.exp(-h*(w_node)))/((1-np.exp(0.5*h))*(1+np.exp(-h*(w_node-0.5)))))
+    def sigmoid(w_variable,h):
+        a=((-np.exp(0.5*h)+np.exp(-h*(w_variable)))/((1-np.exp(0.5*h))*(1+np.exp(-h*(w_variable-0.5)))))
         return(a)
     dCK = sigmoid(w_CK,h)-(decayrate*CK)
     dARR1 = sigmoid(w_ARR1,h)-(decayrate*ARR1)
@@ -351,13 +366,13 @@ def rootNetworkODE(a,t,parameters):
 def plotODEroot(cells,times):
     attractorode = cells[-1, :]  # last value of the ODE simulation
 
-    nodesNames=['CK','ARR1','SHY2','AUXIAAR','ARFR','ARF10','ARF5','XAL1','PLT','AUX','SCR','SHR','MIR165','PHB','JKD','MGP','WOX5','CLE40']
+    variablesNames=['CK','ARR1','SHY2','AUXIAAR','ARFR','ARF10','ARF5','XAL1','PLT','AUX','SCR','SHR','MIR165','PHB','JKD','MGP','WOX5','CLE40']
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6), gridspec_kw={'width_ratios': [3, 1]})
 
     # Time series plot
-    for i, name in enumerate(nodesNames):
-        ax1.plot(times, cells[:, i], label=name, linewidth=3, color=sns.color_palette("tab20", len(nodesNames))[i])
+    for i, name in enumerate(variablesNames):
+        ax1.plot(times, cells[:, i], label=name, linewidth=3, color=sns.color_palette("tab20", len(variablesNames))[i])
     ax1.set_xlabel('Time')
     ax1.set_ylabel('Gene activity')
     ax1.set_title('Root model (ODE version)')
@@ -365,10 +380,10 @@ def plotODEroot(cells,times):
     ax1.grid(True)
 
     # Heatmap of final state
-    sns.heatmap(attractorode.reshape(-1, 1), yticklabels=nodesNames, cmap="viridis", ax=ax2, cbar=False)
-    #sns.heatmap(attractorode.reshape(-1, 1), yticklabels=nodesNames, cmap=sns.color_palette(["red", "green"], as_cmap=True), ax=ax2, cbar=False)
+    sns.heatmap(attractorode.reshape(-1, 1), yticklabels=variablesNames, cmap="viridis", ax=ax2, cbar=False)
+    #sns.heatmap(attractorode.reshape(-1, 1), yticklabels=variablesNames, cmap=sns.color_palette(["red", "green"], as_cmap=True), ax=ax2, cbar=False)
     ax2.set_xticks([])
-    ax2.set_ylabel('Nodes')
+    ax2.set_ylabel('variables')
     ax2.set_title('Final state')
     ax2.set_aspect(0.7)  # Make the heatmap narrower
     plt.savefig("output/2-boolean-to-ode-dynamics.png", dpi=300, bbox_inches='tight')
@@ -377,14 +392,14 @@ def plotODEroot(cells,times):
 
 def plotODErootTransition(cells,times):
     attractorode = cells[-1, :]  # last value of the ODE simulation
-    nodesNames=['CK','ARR1','SHY2','AUXIAAR','ARFR','ARF10','ARF5','XAL1','PLT','AUX','SCR','SHR','MIR165','PHB','JKD','MGP','WOX5','CLE40']
+    variablesNames=['CK','ARR1','SHY2','AUXIAAR','ARFR','ARF10','ARF5','XAL1','PLT','AUX','SCR','SHR','MIR165','PHB','JKD','MGP','WOX5','CLE40']
     end=[1,1,0,0,1,1,1,1,1,1,0,0,1,0,0,0,0,1]
 
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(14, 6), gridspec_kw={'width_ratios': [3, 1, 1]})
 
     # Time series plot
-    for i, name in enumerate(nodesNames):
-        ax1.plot(times, cells[:, i], label=name, linewidth=3, color=sns.color_palette("tab20", len(nodesNames))[i])
+    for i, name in enumerate(variablesNames):
+        ax1.plot(times, cells[:, i], label=name, linewidth=3, color=sns.color_palette("tab20", len(variablesNames))[i])
     ax1.set_xlabel('Time')
     ax1.set_ylabel('Gene activity')
     ax1.set_title('Root model (ODE version)')
@@ -392,18 +407,18 @@ def plotODErootTransition(cells,times):
     ax1.grid(True)
 
     # Heatmap of final state
-    sns.heatmap(attractorode.reshape(-1, 1), yticklabels=nodesNames, cmap="viridis", ax=ax2, cbar=False)
-    #sns.heatmap(attractorode.reshape(-1, 1), yticklabels=nodesNames, cmap=sns.color_palette(["red", "green"], as_cmap=True), ax=ax2, cbar=False)
+    sns.heatmap(attractorode.reshape(-1, 1), yticklabels=variablesNames, cmap="viridis", ax=ax2, cbar=False)
+    #sns.heatmap(attractorode.reshape(-1, 1), yticklabels=variablesNames, cmap=sns.color_palette(["red", "green"], as_cmap=True), ax=ax2, cbar=False)
     ax2.set_xticks([])
-    ax2.set_ylabel('Nodes')
+    ax2.set_ylabel('variables')
     ax2.set_title('Final state')
     ax2.set_aspect(0.7)  # Make the heatmap narrower
 
     # Heatmap of desired end state
-    sns.heatmap(np.array(end).reshape(-1, 1), yticklabels=nodesNames, cmap="viridis", ax=ax3, cbar=False)
-    #sns.heatmap(np.array(end).reshape(-1, 1), yticklabels=nodesNames, cmap=sns.color_palette(["red", "green"], as_cmap=True), ax=ax3, cbar=False)
+    sns.heatmap(np.array(end).reshape(-1, 1), yticklabels=variablesNames, cmap="viridis", ax=ax3, cbar=False)
+    #sns.heatmap(np.array(end).reshape(-1, 1), yticklabels=variablesNames, cmap=sns.color_palette(["red", "green"], as_cmap=True), ax=ax3, cbar=False)
     ax3.set_xticks([])
-    ax3.set_ylabel('Nodes')
+    ax3.set_ylabel('variables')
     ax3.set_title('Desired end state')
     ax3.set_aspect(0.7)
     plt.savefig("output/2-boolean-to-ode-cell-fate-changes.png", dpi=300, bbox_inches='tight')
