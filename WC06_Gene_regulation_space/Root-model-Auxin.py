@@ -4,21 +4,22 @@ from scipy.integrate import odeint
 import pandas as pd
 from Rootfunctions import *
 
+# Grid properties
+x = 8 # number of cell layers in radial direction 
+y = 50 #number of cell layers
+
+# Auxin transport parameters
+auxinTreatment=0 # 0 for control, 10 or 750 for low and high auxin treatments
+simulationSteps=100 
+networkUpdate=simulationSteps/10 # network update is every 10 steps
+auxinSource=0.1 # auxin influx from the vascular cells
+PAT= 0.05
+passiveTransport=PAT/10
+auxinDegradation=passiveTransport/100 
+
 def main():
     plt.ion() 
-    # Grid properties
-    x = 8 # number of cell layers in radial direction 
-    y = 50 #number of cell layers
-
-    # Auxin transport parameters
-    auxinTreatment=0 # 0 for control, 10 or 750 for low and high auxin treatments
-    simulationSteps=100 
-    networkUpdate=simulationSteps/10 # network update is every 10 steps
-    auxinSource=0.1 # auxin influx from the vascular cells
-    PAT= 0.05
-    passiveTransport=PAT/10
-    auxinDegradation=passiveTransport/100 
-
+  
     #Initialize root grid and gene expression
     cellgrid,ckgrid, arr1grid, shy2grid, auxiaagrid, arfrgrid, arf10grid, arf5grid, xal1grid, pltgrid, auxgrid, \
         scrgrid,shrgrid,mir165grid,phbgrid,jkdgrid,mgpgrid, wox5grid,cle40grid = initialCondition(x,y) 
@@ -41,8 +42,10 @@ def main():
                                 arf10grid[j,i],arf5grid[j,i],xal1grid[j,i],pltgrid[j,i],auxgrid[j,i],scrgrid[j,i],
                                 shrgrid[j,i],mir165grid[j,i],phbgrid[j,i],jkdgrid[j,i],mgpgrid[j,i],wox5grid[j,i],
                                 cle40grid[j,i]] # this combines all 18 activity values in a vector
+                    
                     # ODE solver - takes as input the network model, current state, time steps and parameters
                     result = odeint(rootNetwork, cellState, steps, args=(parameters,)) # we solve the ODEs
+
                     ckgrid[j,i], arr1grid[j,i],shy2grid[j,i],auxiaagrid[j,i],arfrgrid[j,i],arf10grid[j,i],arf5grid[j,i],\
                         xal1grid[j,i],pltgrid[j,i],auxgrid[j,i],scrgrid[j,i],shrgrid[j,i],mir165grid[j,i],phbgrid[j,i],\
                             jkdgrid[j,i],mgpgrid[j,i],wox5grid[j,i],cle40grid[j,i]=nodeUpdate(result,ckgrid[j,i], arr1grid[j,i],\
