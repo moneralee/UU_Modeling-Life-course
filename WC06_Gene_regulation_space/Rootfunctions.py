@@ -218,11 +218,9 @@ def rootNetwork(state,t,parameters):
     dCLE40 = calc_derivative(w_CLE40, CLE40)
     dMGP = calc_derivative(w_MGP, MGP)
     dWOX5 = calc_derivative(w_WOX5, WOX5)
-# Solution to practical:
-# Auxin regulates MGP. These has an indirect positive effect on ARF5. 
-    dMGP = (45/(45+auxininput))*((-np.exp(0.5 * h) + np.exp(-h * w_MGP)) / ((1 - np.exp(0.5 * h)) * (1 + np.exp(-h * (w_MGP - 0.5))))) - (lambda_ * MGP)
-# Auxin represses WOX5 at *very* high levels - most hormones exhibit this dosage dependent effect.
-    dWOX5 = (1000/(1000+auxininput))*((-np.exp(0.5 * h) + np.exp(-h * w_WOX5)) / ((1 - np.exp(0.5 * h)) * (1 + np.exp(-h * (w_WOX5 - 0.5)))))-lambda_*WOX5  
+# Here you can write a new dMGP and dWOX5 equation where auxininput affects their production:
+#    dMGP = ((-np.exp(0.5 * h) + np.exp(-h * w_MGP)) / ((1 - np.exp(0.5 * h)) * (1 + np.exp(-h * (w_MGP - 0.5))))) - lambda_ * MGP
+#    dWOX5 = ((-np.exp(0.5 * h) + np.exp(-h * w_WOX5)) / ((1 - np.exp(0.5 * h)) * (1 + np.exp(-h * (w_WOX5 - 0.5)))))-lambda_*WOX5  
     return [dCK, dARR1, dSHY2, dAUXIAAR, dARFR, dARF10, dARF5, dXAL1, dPLT, dAUX, dSCR, dSHR, dMIR165, dPHB, dJKD, dMGP, dWOX5, dCLE40]
 
 def initialCondition(x,y):
@@ -261,6 +259,26 @@ def initialCondition(x,y):
             if cellgrid[j,i] == 1:   #Columella
                 ckgrid[j,i] = 1
                 arr1grid[j,i] = 1
+                arfrgrid[j,i] = 1
+                arf10grid[j,i] = 1
+                arf5grid[j,i] = 1
+                xal1grid[j,i] = 1
+                pltgrid[j,i] = 1
+                auxgrid[j,i] = 1
+                cle40grid[j,i] = 1
+            elif cellgrid[j,i] == 2: #Epidermis
+                ckgrid[j,i] = 0
+                arr1grid[j,i] = 0
+                arfrgrid[j,i] = 1
+                arf10grid[j,i] = 1
+                arf5grid[j,i] = 1
+                xal1grid[j,i] = 1
+                pltgrid[j,i] = 1
+                auxgrid[j,i] = 1
+                cle40grid[j,i] = 1
+            elif cellgrid[j,i] == 3: #Cortex
+                ckgrid[j,i] = 0
+                arr1grid[j,i] = 0
                 arfrgrid[j,i] = 1
                 arf10grid[j,i] = 1
                 arf5grid[j,i] = 1
@@ -324,7 +342,7 @@ def nodeUpdate(result,ck,arr1,shy2,auxiaa,arfr,arf10,arf5,xal1,plt,aux,scr,shr,m
     return ck, arr1, shy2, auxiaa, arfr, arf10, arf5, xal1, plt, aux, scr, shr, mir165, phb, jkd, mgp, wox5, cle40
 
 def plotGrids(cellgrid,auxingrid,arf10grid,arf5grid,mgpgrid,wox5grid,auxinTreatment,t):
-    plt.suptitle(f"Auxin treatment: {auxinTreatment}")
+    plt.suptitle(f"Auxin treatment: {auxinTreatment} Time step: {t}")
     plt.subplot(1, 6, 1)
     plt.imshow(cellgrid, cmap='viridis', vmin=0, vmax=6)
     plt.title('Cells')
